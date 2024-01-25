@@ -17,8 +17,6 @@ contract InsuranceContract {
     
 
     event InsuranceCreated(address indexed etudiant, address indexed society, uint256 amount, uint256 dateCreation, uint256 durationInDays, uint256 dateExpiration);
-    event InsuranceStopped(uint256 indexed id);
-    event InsuranceRestarted(uint256 indexed id);
     event FundTransferredToSociety(address indexed sender, address indexed society, uint256 amount);
 
     modifier onlySociety(uint256 _id) {
@@ -27,14 +25,14 @@ contract InsuranceContract {
     }
 
     address payable owner; // Owner to receive funds
-    address payable society;
+    
 
     constructor() {
         owner = payable(0x7526fb9605FE387929143f626E82125EAf231B2d);
        
     }
 
-    function createInsurance(address _society, uint256 _durationInDays) external payable {
+    function createInsurance(address _society, uint256 _durationInDays,uint256 amount) external payable {
         require(msg.value > 0, "Amount must be greater than 0");
         require(_durationInDays > 0, "Invalid duration");
 
@@ -45,15 +43,14 @@ contract InsuranceContract {
            
             etudiant: msg.sender,
             society: _society,
-            amount: msg.value,
+            amount: amount,
             dateCreation: dateCreation,
             durationInDays: _durationInDays,
             dateExpiration: dateExpiration
             
         });
         // Initialiser society avec la valeur de _society
-        society = payable(_society);
-
+    
         insurances[msg.sender].push(newInsurance);
         insurances[_society].push(newInsurance); // Add to society's insurances
 
@@ -62,27 +59,13 @@ contract InsuranceContract {
        
     }
 
-    function stopInsurance(uint256 _id) external onlySociety(_id) {
-       
-
-    
-        emit InsuranceStopped(_id);
-    }
-
-    function restartInsurance(uint256 _id) external {
-       
-      
-
-        emit InsuranceRestarted(_id);
-    }
 
     function getInsurances() external view returns (Insurance[] memory) {
         return insurances[msg.sender];
     }
 
-    function transferToSociety() external payable {
-        require(society != address(0), "Society address not set");
-        society.transfer(msg.value);
+    function transferToSociety(address society) external payable {
+        payable(society).transfer(msg.value);
         // Emit an event to record the success of the transfer
         emit FundTransferredToSociety(msg.sender, society, msg.value);
     }
